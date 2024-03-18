@@ -1,11 +1,12 @@
 """
-Gateway service
+Gateway service. This is an entrypoint to the API
 """
 
-import json
-from flask import Flask, request, send_file, make_response
+import requests
+
+from flask import Flask, request, make_response
 from flask_cors import CORS
-import os, requests
+import variables
 
 app = Flask(__name__)
 CORS(app)
@@ -14,32 +15,39 @@ CORS(app)
 @app.route("/login", methods=["POST"])
 def login():
     """
-    Endpoint to perform authentication
+    Endpoint to perform authentication.
+    The client must use Basic Auth
     """
     auth = request.authorization
     if not auth:
         return "Requires Basic Auth", 401
     basic_auth = (auth.username, auth.password)
-    resp = requests.post("http://localhost:5000/login", auth=basic_auth)
+    resp = requests.post(variables.AUTH_SERVICE_LOGIN, auth=basic_auth, timeout=None)
 
     if resp.status_code == 200:
         response = make_response("OK")
         response.set_cookie("JWT", resp.text, max_age=14400)
         return response
-    elif resp.status_code == 401:
+    if resp.status_code == 401:
         return "Invalid credentials", 401
     return f"Internal service failed: <{resp.status_code}> {resp.text}"
 
 
 @app.route("/validate-token", methods=["GET"])
 def validate_jwt():
+    """
+    Validates the given token.
+    The token is taken from the cookies
+    """
     jwt = request.cookies.get("JWT")
 
     if not jwt:
         return "Missing JWT", 401
 
     resp = requests.post(
-        "http://localhost:5000/validate", headers={"Authorization": f"Bearer {jwt}"}
+        variables.AUTH_SERVICE_VALIDATE,
+        headers={"Authorization": f"Bearer {jwt}"},
+        timeout=None,
     )
 
     if resp.status_code != 200:
@@ -50,6 +58,9 @@ def validate_jwt():
 
 @app.after_request
 def apply_headings(response):
+    """
+    Adds neccessary headers to each request
+    """
     response.headers["Access-Control-Allow-Credentials"] = "true"
     return response
 
