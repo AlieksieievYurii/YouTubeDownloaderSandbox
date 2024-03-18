@@ -2,13 +2,13 @@
 
 # =============== Python ================
 */.env/*
-
+*__pycache__
 
 
 # =============== Nextjs ==================
 # dependencies
-/node_modules
-/.pnp
+*/node_modules
+*/.pnp
 .pnp.js
 .yarn/install-state.gz
 
@@ -16,11 +16,12 @@
 /coverage
 
 # next.js
-/.next/
-/out/
+*/.next/
+*/out/
+*/package-lock.json
 
 # production
-/build
+*/build
 
 # misc
 .DS_Store
