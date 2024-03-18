@@ -6,7 +6,9 @@ import requests
 
 from flask import Flask, request, make_response
 from flask_cors import CORS
+from authentication import requires_authentication
 import variables
+from http import HTTPStatus
 
 app = Flask(__name__)
 CORS(app)
@@ -34,26 +36,13 @@ def login():
 
 
 @app.route("/validate-token", methods=["GET"])
+@requires_authentication
 def validate_jwt():
     """
     Validates the given token.
     The token is taken from the cookies
     """
-    jwt = request.cookies.get("JWT")
-
-    if not jwt:
-        return "Missing JWT", 401
-
-    resp = requests.post(
-        variables.AUTH_SERVICE_VALIDATE,
-        headers={"Authorization": f"Bearer {jwt}"},
-        timeout=None,
-    )
-
-    if resp.status_code != 200:
-        return "Token broken", 401
-
-    return "Token OK", 200
+    return HTTPStatus.OK.phrase
 
 
 @app.after_request
@@ -66,8 +55,8 @@ def apply_headings(response):
 
 
 @app.route("/test")
+@requires_authentication
 def test():
-    print(request.cookies)
     return "OK"
 
 
