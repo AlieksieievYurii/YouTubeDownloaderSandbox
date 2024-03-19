@@ -2,14 +2,16 @@
 Gateway service. This is an entrypoint to the API
 """
 
+from http import HTTPStatus
+
 import requests
+import variables
 
 from flask import Flask, request, make_response
 from flask_cors import CORS
 from authentication import requires_authentication
 from mongodb import MongoDB, RedundantException
-import variables
-from http import HTTPStatus
+
 
 app = Flask(__name__)
 CORS(app)
@@ -27,7 +29,9 @@ def login():
     if not auth:
         return "Requires Basic Auth", 401
     basic_auth = (auth.username, auth.password)
-    resp = requests.post(variables.AUTH_SERVICE_LOGIN, auth=basic_auth, timeout=None)
+    resp = requests.post(
+        variables.AUTH_SERVICE_LOGIN, auth=basic_auth, timeout=None
+    )
 
     if resp.status_code == 200:
         response = make_response("OK")
@@ -69,6 +73,7 @@ def queue(user: dict):
 
     try:
         mongo.insert_user(email, youtube_url)
+        mongo.insert_job(youtube_url)
     except RedundantException:
         return "You already have this video", HTTPStatus.BAD_REQUEST
 
