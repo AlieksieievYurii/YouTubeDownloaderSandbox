@@ -4,18 +4,17 @@ Gateway service. This is an entrypoint to the API
 
 import requests
 
-from flask_pymongo import PyMongo
 from flask import Flask, request, make_response
 from flask_cors import CORS
 from authentication import requires_authentication
+from mongodb import MongoDB, RedundantException
 import variables
 from http import HTTPStatus
 
 app = Flask(__name__)
 CORS(app)
 
-mongo = PyMongo(app, uri=variables.MONGODB)
-mongo_users = mongo.cx.get_database("users_db")["users"]
+mongo = MongoDB(app, variables.MONGODB)
 
 
 @app.route("/login", methods=["POST"])
@@ -63,17 +62,15 @@ def apply_headings(response):
 def queue(user: dict):
     """Puts the given youtube url into queue for downloading"""
     email = user["email"]
-    body = request.json.get("youtube_url")
-    if not body:
+    youtube_url = request.json.get("youtube_url")
+
+    if not youtube_url:
         return "youtube_url must be defined in body!", HTTPStatus.BAD_REQUEST
 
-    if not list(mongo_users.find({"email": email})):
-        mongo_users.insert_one({"email": email})
-
-    if list(mongo_users.find({"email": email, "videos": body})):
+    try:
+        mongo.insert_user(email, youtube_url)
+    except RedundantException:
         return "You already have this video", HTTPStatus.BAD_REQUEST
-
-    mongo_users.update_one({"email": email}, {"$push": {"videos": body}})
 
     return "OK"
 
