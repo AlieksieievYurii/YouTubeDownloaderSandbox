@@ -1,4 +1,4 @@
-version: '3.1'
+version: "3.1"
 
 services:
   mongo:
@@ -19,3 +19,15 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: yurii
       ME_CONFIG_MONGODB_ADMINPASSWORD: yurii
       ME_CONFIG_MONGODB_URL: mongodb://yurii:yurii@mongo:27017/
+
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: yurii
+    ports:
+      - 3306:3306
+    volumes: 
+      - type: bind
+        source: D:/Projects/YouTubeDownloader/back/auth/init.sql
+        target: /docker-entrypoint-initdb.d/init.sql
