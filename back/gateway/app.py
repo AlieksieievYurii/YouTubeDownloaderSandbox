@@ -3,9 +3,12 @@ Gateway service. This is an entrypoint to the API
 """
 
 from http import HTTPStatus
+import json
 
 import requests
 import variables
+import utils
+import pika
 
 from flask import Flask, request, make_response
 from flask_cors import CORS
@@ -17,6 +20,18 @@ app = Flask(__name__)
 CORS(app)
 
 mongo = MongoDB(app, variables.MONGODB)
+
+
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters(
+        variables.RABBITMQ_HOST,
+        credentials=pika.PlainCredentials(
+            username=variables.RABBITMQ_SVC_USER,
+            password=variables.RABBITMQ_SVC_PASSWORD,
+        ),
+    )
+)
+channel = connection.channel()
 
 
 @app.route("/login", methods=["POST"])
@@ -71,14 +86,26 @@ def queue(user: dict):
     if not youtube_url:
         return "youtube_url must be defined in body!", HTTPStatus.BAD_REQUEST
 
+    video_id = utils.extract_video_id(youtube_url)
+
     try:
-        mongo.insert_user(email, youtube_url)
-        mongo.insert_job(youtube_url)
+        mongo.insert_user(email, video_id)
+        mongo.insert_job(youtube_url, video_id)
     except RedundantException:
         return "You already have this video", HTTPStatus.BAD_REQUEST
+
+    channel.basic_publish(
+        exchange="",
+        routing_key="jobs",
+        body=json.dumps({"url": youtube_url, "video_id": video_id}),
+        properties=pika.BasicProperties(
+            delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
+        ),
+    )
 
     return "OK"
 
 
 if __name__ == "__main__":
+    channel.queue_declare(queue="jobs")
     app.run(host="0.0.0.0", port=8080)
