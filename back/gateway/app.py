@@ -86,7 +86,10 @@ def queue(user: dict):
     if not youtube_url:
         return "youtube_url must be defined in body!", HTTPStatus.BAD_REQUEST
 
-    video_id = utils.extract_video_id(youtube_url)
+    try:
+        video_id = utils.extract_video_id(youtube_url)
+    except RuntimeError as error:
+        return f"Wrong YouTube Video URL: {error}", HTTPStatus.BAD_REQUEST
 
     try:
         mongo.insert_user(email, video_id)
