@@ -1,17 +1,29 @@
+"""Contains Middleware interface for working with MongoDB"""
+
 from flask import Flask
 from flask_pymongo import PyMongo
 
 
 class RedundantException(Exception):
+    """Supposed to be raised once user already have downloaded audio"""
+
+    pass
+
+
+class UserNotFound(Exception):
+    """Supposed to be raised if user is not found"""
+
     pass
 
 
 class MongoDB(object):
+    """Interface for working with MongoDB"""
 
     def __init__(self, app: Flask, uri: str) -> None:
         self._mongo = PyMongo(app, uri)
         self._mongo_users = self._mongo.cx.get_database("main")["users"]
         self._jobs = self._mongo.cx.get_database("main")["items"]
+        self._mongo.cx.get_database("main")
 
     def insert_user(self, email: str, video_id: str):
         """Assign given youtube vide url to the user"""
@@ -19,11 +31,11 @@ class MongoDB(object):
         if not list(self._mongo_users.find({"email": email})):
             self._mongo_users.insert_one({"email": email})
 
-        if list(self._mongo_users.find({"email": email, "videos": video_id})):
+        if list(self._mongo_users.find({"email": email, "items": video_id})):
             raise RedundantException("You already queued the video")
 
         self._mongo_users.update_one(
-            {"email": email}, {"$push": {"videos": video_id}}
+            {"email": email}, {"$push": {"items": video_id}}
         )
 
     def insert_job(self, target_url: str, video_id: str):
@@ -36,3 +48,11 @@ class MongoDB(object):
                 "state": "QUEUED",
             }
             self._jobs.insert_one(body)
+
+    def get_user_items(self, email: str):
+        user = self._mongo_users.find_one({"email": email})
+        if not user:
+            raise UserNotFound(f"User with email <{email}> not found")
+        return list(
+            self._jobs.find({"video_id": {"$in": user["items"]}}, {"_id": 0})
+        )

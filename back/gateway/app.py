@@ -106,6 +106,13 @@ def queue(user: dict):
     return "OK"
 
 
+@app.route("/items", methods=["GET"])
+@requires_authentication
+def get_items(user: dict):
+    """Returns a list of items for an authenticated user"""
+    return mongo.get_user_items(user["email"])
+
+
 if __name__ == "__main__":
     channel.queue_declare(queue="jobs")
     app.run(host="0.0.0.0", port=8080)
