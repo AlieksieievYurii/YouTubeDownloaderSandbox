@@ -1,7 +1,7 @@
 "use client";
 import { CloseIcon, DeleteIcon, DownloadIcon, RepeatIcon, WarningTwoIcon } from "@chakra-ui/icons";
 import { Link } from "@chakra-ui/next-js";
-import { Button, Flex, IconButton, Input, Progress, Spinner, Text } from "@chakra-ui/react";
+import { Button, Flex, IconButton, Input, Progress, Spinner, Text, useToast } from "@chakra-ui/react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 
@@ -149,6 +149,7 @@ export default function Page() {
   const [invalidInput, setInvalidInput] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const nameInput = useRef<HTMLInputElement>(null);
+  const toast = useToast()
 
   const youTubeUrlRegex = /https:\/\/www\.youtube\.com\/watch\?v=(\S+)/;
 
@@ -177,6 +178,13 @@ export default function Page() {
       .catch((error) => {
         setIsPosting(false);
         console.log(error);
+        toast({
+          title: error.response.data,
+          status: "error",
+          position: "top",
+          duration: null,
+          isClosable: true,
+        })
       });
   }
 
@@ -195,7 +203,14 @@ export default function Page() {
         setIsLoadingItems(false);
       })
       .catch((error) => {
-        console.log(error);
+        console.log(`Failed to load items: ${error}`)
+        toast({
+          title: `Failed to load items!`,
+          status: "error",
+          position: "top",
+          duration: null,
+          isClosable: true,
+        })
       });
   }, []);
 
