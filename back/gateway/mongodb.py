@@ -1,11 +1,17 @@
 """Contains Middleware interface for working with MongoDB"""
 
+from bson import ObjectId
 from flask import Flask
 from flask_pymongo import PyMongo
+import gridfs
 
 
 class RedundantException(Exception):
     """Supposed to be raised once user already have downloaded audio"""
+
+
+class NotReadyToDownload(Exception):
+    """Supposed to be raised when item is not downloaded"""
 
 
 class MongoDB(object):
@@ -15,6 +21,9 @@ class MongoDB(object):
         self._mongo = PyMongo(app, uri)
         self._mongo_users = self._mongo.cx.get_database("main")["users"]
         self._jobs = self._mongo.cx.get_database("main")["items"]
+        self._audios = gridfs.GridFS(
+            self._mongo.cx.get_database("audio_files")
+        )
         self._mongo.cx.get_database("main")
 
     def insert_user(self, email: str, video_id: str):
@@ -81,4 +90,17 @@ class MongoDB(object):
                     "downloaded_size": 0,
                 }
             },
+        )
+
+    def get_audio_file(self, video_id: str):
+        """
+        Returns file interface containing downloaded audio of given video id
+        """
+        item = self._jobs.find_one(
+            {"video_id": video_id, "state": "DOWNLOADED"}
+        )
+        if item:
+            return self._audios.get(ObjectId(item["audio_file_id"]))
+        raise NotReadyToDownload(
+            f"Item (video_id: {video_id}) is not downloaded yet"
         )

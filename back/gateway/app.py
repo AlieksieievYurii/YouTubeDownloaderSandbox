@@ -9,7 +9,7 @@ import requests
 import variables
 import utils
 
-from flask import Flask, request, make_response
+from flask import Flask, request, make_response, send_file
 from flask_cors import CORS
 from authentication import requires_authentication
 from mongodb import MongoDB, RedundantException
@@ -119,6 +119,22 @@ def retry(user: dict, video_id: str):
         rb_queue.publish_job(url, video_id)
         mongo.set_queued_state(video_id)
         return "OK", HTTPStatus.OK
+    return (
+        f"User does not own the item with ID {video_id}",
+        HTTPStatus.BAD_REQUEST,
+    )
+
+
+@app.route("/download/<video_id>", methods=["GET"])
+@requires_authentication
+def download(user: dict, video_id: str):
+    """Sends audio file to the caller"""
+    if mongo.has_user_video(user["email"], video_id):
+        return send_file(
+            mongo.get_audio_file(video_id),
+            download_name=f"{video_id}.mp3",
+            as_attachment=True,
+        )
     return (
         f"User does not own the item with ID {video_id}",
         HTTPStatus.BAD_REQUEST,
