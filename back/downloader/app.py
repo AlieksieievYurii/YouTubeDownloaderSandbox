@@ -29,7 +29,8 @@ client = MongoClient(variables.MONGODB)
 fs_videos = GridFS(client.get_database("audio_files"))
 
 items_collection = client.get_database("main").get_collection("items")
-#export PATH=$PATH:/c/Users/aliek/Downloads/ffmpeg-2024-03-20-git-e04c638f5f-full_build/bin
+# export PATH=$PATH:/c/Users/aliek/Downloads/ffmpeg-2024-03-20-git-e04c638f5f-full_build/bin
+
 
 def set_item_status_as_downloading(
     video_id: str,
@@ -77,7 +78,7 @@ def set_item_status_as_downloaded(
 
 def on_progress(video_id: str, downloaded: int, size: int):
     """Callback which is triggered by each downloading progress"""
-    progress: int = size / downloaded * 100
+    progress: int = (downloaded / size) * 100
     set_item_status_as_downloading(video_id, progress, downloaded, size)
 
 

@@ -94,9 +94,9 @@ const Item = ({
 
   let hint = "Pending...";
   if (item.state === State.DOWNLOADING) {
-    hint = `${item.progress} % (${item.downloaded_size / 1000000} / ${item.total_size / 1000000} MB)`;
+    hint = `${item.progress} % (${(item.downloaded_size / 1000000).toFixed(2)} / ${(item.total_size / 1000000).toFixed(2)} MB)`;
   } else if (item.state === State.DOWNLOADED) {
-    hint = `${item.total_size / 1000000} MB`;
+    hint = `${(item.total_size / 1000000).toFixed(2)} MB`;
   } else if (item.state === State.FAILED) {
     hint = item.error_message || "No error message";
   }
@@ -180,7 +180,7 @@ export default function Page() {
   const dialogRef = useRef(null);
   const router = useRouter();
 
-  const youTubeUrlRegex = /https:\/\/www\.youtube\.com\/watch\?v=(\S+)/;
+  const youTubeUrlRegex = /https:\/\/www\.youtube\.com\/watch\?v=(\S{11})/;
 
   async function onQueue() {
     const target_url = nameInput.current!!.value;

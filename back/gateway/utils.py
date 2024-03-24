@@ -1,7 +1,7 @@
 import re
 
 
-YT_LINK_RE = re.compile(r"https:\/\/www\.youtube\.com\/watch\?v=(\S+)")
+YT_LINK_RE = re.compile(r"https:\/\/www\.youtube\.com\/watch\?v=(\S{11})")
 
 
 def extract_video_id(url: str) -> str:
