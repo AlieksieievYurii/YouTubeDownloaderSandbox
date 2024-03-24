@@ -3,12 +3,11 @@ Gateway service. This is an entrypoint to the API
 """
 
 from http import HTTPStatus
-import json
+from rb_queue import Queue
 
 import requests
 import variables
 import utils
-import pika
 
 from flask import Flask, request, make_response
 from flask_cors import CORS
@@ -21,17 +20,11 @@ CORS(app)
 
 mongo = MongoDB(app, variables.MONGODB)
 
-
-connection = pika.BlockingConnection(
-    pika.ConnectionParameters(
-        variables.RABBITMQ_HOST,
-        credentials=pika.PlainCredentials(
-            username=variables.RABBITMQ_SVC_USER,
-            password=variables.RABBITMQ_SVC_PASSWORD,
-        ),
-    )
+rb_queue = Queue(
+    variables.RABBITMQ_HOST,
+    variables.RABBITMQ_SVC_USER,
+    variables.RABBITMQ_SVC_PASSWORD,
 )
-channel = connection.channel()
 
 
 @app.route("/login", methods=["POST"])
@@ -45,7 +38,7 @@ def login():
         return "Requires Basic Auth", 401
     basic_auth = (auth.username, auth.password)
     resp = requests.post(
-        variables.AUTH_SERVICE_LOGIN, auth=basic_auth, timeout=None
+        variables.AUTH_SERVICE_LOGIN, auth=basic_auth, timeout=10
     )
 
     if resp.status_code == 200:
@@ -95,16 +88,9 @@ def queue(user: dict):
         mongo.insert_user(email, video_id)
         mongo.insert_job(youtube_url, video_id)
     except RedundantException:
-        return "You already have this video", HTTPStatus.BAD_REQUEST
+        return "You already have downloaded this", HTTPStatus.BAD_REQUEST
 
-    channel.basic_publish(
-        exchange="",
-        routing_key="jobs",
-        body=json.dumps({"url": youtube_url, "video_id": video_id}),
-        properties=pika.BasicProperties(
-            delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE
-        ),
-    )
+    rb_queue.publish_job(youtube_url, video_id)
 
     return "OK"
 
@@ -117,5 +103,4 @@ def get_items(user: dict):
 
 
 if __name__ == "__main__":
-    channel.queue_declare(queue="jobs")
     app.run(host="0.0.0.0", port=8080)

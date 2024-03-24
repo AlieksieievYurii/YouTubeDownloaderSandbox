@@ -7,14 +7,6 @@ from flask_pymongo import PyMongo
 class RedundantException(Exception):
     """Supposed to be raised once user already have downloaded audio"""
 
-    pass
-
-
-class UserNotFound(Exception):
-    """Supposed to be raised if user is not found"""
-
-    pass
-
 
 class MongoDB(object):
     """Interface for working with MongoDB"""
@@ -39,6 +31,7 @@ class MongoDB(object):
         )
 
     def insert_job(self, target_url: str, video_id: str):
+        """Registers item (job) which contains information about downloading"""
         job = self._jobs.find_one({"video_id": video_id})
         if not job:
             body = {
@@ -49,10 +42,11 @@ class MongoDB(object):
             }
             self._jobs.insert_one(body)
 
-    def get_user_items(self, email: str):
+    def get_user_items(self, email: str) -> list:
+        """Returns the given user's list of downloaded audios"""
         user = self._mongo_users.find_one({"email": email})
         if not user:
-            raise UserNotFound(f"User with email <{email}> not found")
+            return []
         return list(
             self._jobs.find({"video_id": {"$in": user["items"]}}, {"_id": 0})
         )
