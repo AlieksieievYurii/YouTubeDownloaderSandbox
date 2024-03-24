@@ -1,7 +1,16 @@
 "use client";
 import { CloseIcon, DeleteIcon, DownloadIcon, RepeatIcon, WarningTwoIcon } from "@chakra-ui/icons";
 import { Link } from "@chakra-ui/next-js";
-import { Button, Flex, IconButton, Input, Progress, Spinner, Text, useToast } from "@chakra-ui/react";
+import {
+  Button,
+  Flex,
+  IconButton,
+  Input,
+  Progress,
+  Spinner,
+  Text,
+  useToast,
+} from "@chakra-ui/react";
 import axios from "axios";
 import { useEffect, useRef, useState } from "react";
 
@@ -149,7 +158,7 @@ export default function Page() {
   const [invalidInput, setInvalidInput] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const nameInput = useRef<HTMLInputElement>(null);
-  const toast = useToast()
+  const toast = useToast();
 
   const youTubeUrlRegex = /https:\/\/www\.youtube\.com\/watch\?v=(\S+)/;
 
@@ -184,38 +193,62 @@ export default function Page() {
           position: "top",
           duration: null,
           isClosable: true,
-        })
+        });
       });
   }
 
   const onInputChange = () => {
-    setInvalidInput(null)
-  }
+    setInvalidInput(null);
+  };
 
-  useEffect(() => {
-    setIsLoadingItems(false);
+  const requestItems = (onResult: (items: Item[]) => void, onError: (error: string) => void) => {
     axios
       .get<Item[]>(ITEMS_ENDPOINT, {
         withCredentials: true,
       })
       .then((response) => {
-        setItems(response.data);
-        setIsLoadingItems(false);
+        onResult(response.data);
       })
       .catch((error) => {
-        console.log(`Failed to load items: ${error}`)
+        console.log(`Failed to load items: ${error}`);
+        onError(error);
+      });
+  };
+
+  useEffect(() => {
+    requestItems(
+      (items) => {
+        setItems(items);
+        setIsLoadingItems(false);
+      },
+      (error) => {
+        console.log(`Failed to load items: ${error}`);
         toast({
           title: `Failed to load items!`,
           status: "error",
           position: "top",
           duration: null,
           isClosable: true,
-        })
-      });
+        });
+      },
+    );
+
+    const id = setInterval(() => {
+      requestItems(
+        (items) => {
+          setItems(items);
+        },
+        () => {
+          console.log("Failed to update items");
+        },
+      );
+    }, 3000);
+    return () => clearInterval(id);
   }, []);
 
   return (
-    <Flex p={10} justifyContent="center">
+    <Flex p={10} alignItems="center" direction="column">
+      <Text fontSize="4xl">Audio Downloader from YouTube</Text>
       <Flex
         boxShadow="lg"
         borderRadius="xl"
@@ -262,8 +295,12 @@ export default function Page() {
                 size="xl"
               />
             </Flex>
+          ) : items.length != 0 ? (
+            items.map((it) => <Item key={it.video_id} item={it} />)
           ) : (
-            data.map((it) => <Item key={it.video_id} item={it} />)
+            <Flex justifyContent="center" p={5}>
+              <Text>No downloaded audios yet!</Text>
+            </Flex>
           )}
         </Flex>
       </Flex>
