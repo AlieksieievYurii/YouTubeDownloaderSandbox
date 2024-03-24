@@ -29,12 +29,25 @@ client = MongoClient(variables.MONGODB)
 fs_videos = GridFS(client.get_database("audio_files"))
 
 items_collection = client.get_database("main").get_collection("items")
+#export PATH=$PATH:/c/Users/aliek/Downloads/ffmpeg-2024-03-20-git-e04c638f5f-full_build/bin
 
-
-def set_item_status_as_downloading(video_id: str) -> None:
+def set_item_status_as_downloading(
+    video_id: str,
+    progress: int = 0,
+    downloaded_size: int = 0,
+    total_size: int = 0,
+) -> None:
     """Sets the item as downloading in the DB"""
     items_collection.update_one(
-        {"video_id": video_id}, {"$set": {"state": "DOWNLOADING"}}
+        {"video_id": video_id},
+        {
+            "$set": {
+                "state": "DOWNLOADING",
+                "progress": progress,
+                "downloaded_size": downloaded_size,
+                "total_size": total_size,
+            }
+        },
     )
 
 
@@ -56,21 +69,16 @@ def set_item_status_as_downloaded(
             "$set": {
                 "audio_file_id": audio_file_id,
                 "state": "DOWNLOADED",
-                "size": size,
+                "total_size": size,
             }
         },
     )
 
 
 def on_progress(video_id: str, downloaded: int, size: int):
-    pass
-    # TODO and test
-    # items_collection.update_one(
-    #     {"video_id": video_id}, {"$set": {"progress": downloaded}}
-    # )
-    # print("Prog: ", end="")
-    # print(size)
-    # print(f"{size} / {downloaded}")
+    """Callback which is triggered by each downloading progress"""
+    progress: int = size / downloaded * 100
+    set_item_status_as_downloading(video_id, progress, downloaded, size)
 
 
 def on_reveice_job(ch, method, properties, body) -> None:
@@ -87,9 +95,12 @@ def on_reveice_job(ch, method, properties, body) -> None:
         )
     except Exception as error:
         print(error)
-        set_item_status_as_failed(video_id, str(set_item_status_as_failed))
+        set_item_status_as_failed(video_id, str(error))
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        return
     uid = fs_videos.put(file.read_bytes())
-    set_item_status_as_downloaded(uid, video_id, file.stat().st_size)
+    set_item_status_as_downloaded(str(uid), video_id, file.stat().st_size)
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
 def main() -> None:
