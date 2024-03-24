@@ -110,5 +110,20 @@ def terminate(user: dict, video_id: str):
     return "OK", HTTPStatus.OK
 
 
+@app.route("/retry/<video_id>", methods=["POST"])
+@requires_authentication
+def retry(user: dict, video_id: str):
+    """Retries downloading process of given video id"""
+    if mongo.has_user_video(user["email"], video_id):
+        url = mongo.get_youtube_url(video_id)
+        rb_queue.publish_job(url, video_id)
+        mongo.set_queued_state(video_id)
+        return "OK", HTTPStatus.OK
+    return (
+        f"User does not own the item with ID {video_id}",
+        HTTPStatus.BAD_REQUEST,
+    )
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

@@ -56,3 +56,29 @@ class MongoDB(object):
         return list(
             self._jobs.find({"video_id": {"$in": user["items"]}}, {"_id": 0})
         )
+
+    def has_user_video(self, email: str, video_id: str) -> bool:
+        """Checks if user has given video"""
+        user = self._mongo_users.find_one({"email": email})
+        return video_id in user["items"]
+
+    def get_youtube_url(self, video_id: str) -> str:
+        """Returns origin YouTube url for given video id"""
+        result = self._jobs.find_one({"video_id": video_id})
+        return result["url"]
+
+    def set_queued_state(self, video_id: str) -> None:
+        """Sets a job as queued again"""
+        self._jobs.update_one(
+            {"video_id": video_id},
+            {
+                "$set": {
+                    "progress": 0,
+                    "state": "QUEUED",
+                    "total_size": 0,
+                    "error_message": "",
+                    "audio_file_id": "",
+                    "downloaded_size": 0,
+                }
+            },
+        )
