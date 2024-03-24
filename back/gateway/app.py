@@ -102,5 +102,13 @@ def get_items(user: dict):
     return mongo.get_user_items(user["email"])
 
 
+@app.route("/terminate/<video_id>", methods=["DELETE"])
+@requires_authentication
+def terminate(user: dict, video_id: str):
+    """Removes item from the user"""
+    mongo.remove_item_from_user(user["email"], video_id)
+    return "OK", HTTPStatus.OK
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080)

@@ -42,6 +42,12 @@ class MongoDB(object):
             }
             self._jobs.insert_one(body)
 
+    def remove_item_from_user(self, email: str, video_id) -> None:
+        """Removes video item from given user"""
+        self._mongo_users.update_one(
+            {"email": email}, {"$pull": {"items": video_id}}
+        )
+
     def get_user_items(self, email: str) -> list:
         """Returns the given user's list of downloaded audios"""
         user = self._mongo_users.find_one({"email": email})
