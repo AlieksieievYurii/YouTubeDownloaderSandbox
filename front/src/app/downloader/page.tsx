@@ -276,7 +276,11 @@ export default function Page() {
   }, []);
 
   const cancelItem = (item: Item) => {
-    axios.delete(`${TERMINATE_ENDPOINT}/${item.video_id}`, { withCredentials: true });
+    dialog.onOpen()
+    // confirm("title", "de", () => {
+    //   axios.delete(`${TERMINATE_ENDPOINT}/${item.video_id}`, { withCredentials: true });
+    // })
+    
   };
 
   const retry = (item: Item, done: () => void) => {

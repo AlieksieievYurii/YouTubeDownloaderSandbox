@@ -1,6 +1,6 @@
 "use client";
-import test from "node:test";
 
+import { LOGIN_ENDPOINT } from "@/config";
 import {
   Avatar,
   Box,
@@ -18,12 +18,9 @@ import {
   Stack,
 } from "@chakra-ui/react";
 import axios from "axios";
-import { redirect } from "next/navigation";
 import { useRouter } from "next/navigation";
-import { encode } from "punycode";
 import { FormEvent, useState } from "react";
 import { FaLock, FaUserAlt } from "react-icons/fa";
-
 
 const CFaUserAlt = chakra(FaUserAlt);
 const CFaLock = chakra(FaLock);
@@ -32,7 +29,7 @@ export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter()
+  const router = useRouter();
   const handleShowClick = () => setShowPassword(!showPassword);
 
   function getAuthHeader(data: FormData): string {
@@ -46,36 +43,34 @@ export default function Page() {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    
+
     const formData = new FormData(event.currentTarget);
 
-    axios.post(
-      "http://localhost:8080/login",
-      {},
-      {
-        withCredentials: true,
-        headers: {
-          Authorization: `Basic ${getAuthHeader(formData)}`,
-      
+    axios
+      .post(
+        LOGIN_ENDPOINT,
+        {},
+        {
+          withCredentials: true,
+          headers: {
+            Authorization: `Basic ${getAuthHeader(formData)}`,
+          },
         },
-      },
-    ).then((response) => {
-      console.log(response);
-      router.push('/test')
-      
-    }).catch((error) => {
-      setIsLoading(false);
-      console.log(error);
-    })
-
+      )
+      .then((response) => {
+        router.push("/downloader");
+      })
+      .catch((error) => {
+        setIsLoading(false);
+        console.log(error);
+      });
   }
 
   async function exp() {
-    const resp = await axios.get("http://localhost:8080/test",{
-      withCredentials: true
-    })
+    const resp = await axios.get("http://localhost:8080/test", {
+      withCredentials: true,
+    });
     console.log(resp);
-    
   }
 
   return (
