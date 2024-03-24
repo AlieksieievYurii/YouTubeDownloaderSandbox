@@ -104,3 +104,7 @@ class MongoDB(object):
         raise NotReadyToDownload(
             f"Item (video_id: {video_id}) is not downloaded yet"
         )
+
+    def item_exists(self, video_id: str) -> bool:
+        """Checks if given item already exists(proceeded)"""
+        return bool(self._jobs.find_one({"video_id": video_id}))

@@ -86,11 +86,11 @@ def queue(user: dict):
 
     try:
         mongo.insert_user(email, video_id)
-        mongo.insert_job(youtube_url, video_id)
+        if not mongo.item_exists(video_id):
+            mongo.insert_job(youtube_url, video_id)
+            rb_queue.publish_job(youtube_url, video_id)
     except RedundantException:
         return "You already have downloaded this", HTTPStatus.BAD_REQUEST
-
-    rb_queue.publish_job(youtube_url, video_id)
 
     return "OK"
 
