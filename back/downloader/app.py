@@ -78,7 +78,7 @@ def set_item_status_as_downloaded(
 
 def on_progress(video_id: str, downloaded: int, size: int):
     """Callback which is triggered by each downloading progress"""
-    progress: int = (downloaded / size) * 100
+    progress: int = int((downloaded / size) * 100)
     set_item_status_as_downloading(video_id, progress, downloaded, size)
 
 
