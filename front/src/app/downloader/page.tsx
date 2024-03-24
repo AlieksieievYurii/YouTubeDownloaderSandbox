@@ -16,7 +16,6 @@ import {
   Progress,
   Spinner,
   Text,
-  useDisclosure,
   useToast,
 } from "@chakra-ui/react";
 import axios from "axios";
@@ -48,23 +47,23 @@ enum State {
   FAILED = "FAILED",
 }
 
-const ConfirmationDialog = ({ dialog, title, description, onConfirm }: any) => {
+const ConfirmationDialog = ({ target }: any) => {
   return (
     <>
-      <Modal isOpen={dialog.isOpen} onClose={dialog.onClose}>
+      <Modal isOpen={target != null} onClose={target?.onCancel}>
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>{title}</ModalHeader>
+          <ModalHeader>{target?.title}</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
-            <Text>{description}</Text>
+            <Text>{target?.description}</Text>
           </ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="blue" mr={3} onClick={dialog.onClose}>
+            <Button colorScheme="blue" mr={3} onClick={target?.onCancel}>
               Cancel
             </Button>
-            <Button variant="ghost" colorScheme="red" onClick={onConfirm}>
+            <Button variant="ghost" colorScheme="red" onClick={target?.onConfirm}>
               OK
             </Button>
           </ModalFooter>
@@ -78,14 +77,13 @@ const Item = ({
   item,
   onTerminate,
   onRetry,
-  onDownload,
 }: {
   item: Item;
-  onTerminate: (item: Item) => void;
+  onTerminate: (item: Item, showProcessing: () => void) => void;
   onRetry: (item: Item, done: () => void) => void;
-  onDownload: (item: Item) => void;
 }) => {
   const [loading, setLoading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
 
   let progress_bar = null;
   if (item.state === State.QUEUED || item.state === State.DOWNLOADING) {
@@ -94,9 +92,9 @@ const Item = ({
 
   let hint = "Pending...";
   if (item.state === State.DOWNLOADING) {
-    hint = `${item.progress} % (${(item.downloaded_size / 1000000).toFixed(2)} / ${(item.total_size / 1000000).toFixed(2)} MB)`;
+    hint = `${item.progress} % (${(item.downloaded_size / 1024 / 1024).toFixed(2)} / ${(item.total_size / 1024 / 1024).toFixed(2)} MB)`;
   } else if (item.state === State.DOWNLOADED) {
-    hint = `${(item.total_size / 1000000).toFixed(2)} MB`;
+    hint = `${(item.total_size / 1024 / 1024).toFixed(2)} MB`;
   } else if (item.state === State.FAILED) {
     hint = item.error_message || "No error message";
   }
@@ -108,8 +106,7 @@ const Item = ({
       colorScheme="blue"
       isLoading={loading}
       onClick={() => {
-        setLoading(true);
-        onTerminate(item);
+        onTerminate(item, () => setLoading(true));
       }}
     />
   );
@@ -122,16 +119,12 @@ const Item = ({
           icon={<DeleteIcon />}
           colorScheme="red"
           onClick={() => {
-            setLoading(true);
-            onTerminate(item);
+            onTerminate(item, () => setLoading(true));
           }}
         />
-        <IconButton
-          aria-label="Download"
-          icon={<DownloadIcon />}
-          colorScheme="blue"
-          onClick={() => onDownload(item)}
-        />
+        <a href={`${DOWNLOAD_ENDPOINT}/${item.video_id}`}>
+          <IconButton aria-label="Download" icon={<DownloadIcon />} colorScheme="blue" />
+        </a>
       </Flex>
     );
   else if (item.state === State.FAILED)
@@ -141,15 +134,19 @@ const Item = ({
           aria-label="Delete"
           icon={<DeleteIcon />}
           colorScheme="red"
-          onClick={() => onTerminate(item)}
+          isLoading={loading}
+          onClick={() => onTerminate(item, () => setLoading(true))}
         />
         <IconButton
           aria-label="Retry"
           icon={<RepeatIcon />}
           colorScheme="orange"
+          isLoading={retrying}
           onClick={() => {
-            setLoading(true);
-            onRetry(item, () => setLoading(false));
+            setRetrying(true);
+            onRetry(item, () => {
+              setRetrying(false);
+            });
           }}
         />
       </Flex>
@@ -158,7 +155,7 @@ const Item = ({
   return (
     <Flex mt={3} borderRadius="xl" direction="column" bg="gray.100" p={3}>
       <Flex justifyContent="space-between" alignItems="center" gap={2}>
-        <Link href={item.url}>{item.url}</Link>
+        <Link href={item.url}>{item.video_id}</Link>
         <Text maxWidth="50%" as="i">
           {hint}
         </Text>
@@ -174,11 +171,9 @@ export default function Page() {
   const [isLoadingItems, setIsLoadingItems] = useState(true);
   const [invalidInput, setInvalidInput] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
+  const [targetConfirmation, setTargetConfirmation] = useState<any | null>(null);
   const nameInput = useRef<HTMLInputElement>(null);
   const toast = useToast();
-  const dialog = useDisclosure();
-  const dialogRef = useRef(null);
-  const router = useRouter();
 
   const youTubeUrlRegex = /https:\/\/www\.youtube\.com\/watch\?v=(\S{11})/;
 
@@ -275,27 +270,54 @@ export default function Page() {
     return () => clearInterval(id);
   }, []);
 
-  const cancelItem = (item: Item) => {
-    dialog.onOpen()
-    // confirm("title", "de", () => {
-    //   axios.delete(`${TERMINATE_ENDPOINT}/${item.video_id}`, { withCredentials: true });
-    // })
-    
+  const terminateItem = (item: Item, showProcessing: () => void) => {
+    setTargetConfirmation({
+      video_id: item.video_id,
+      title: "Delete item",
+      description: "Are you sure to delete?",
+      onConfirm: () => {
+        setTargetConfirmation(null);
+        showProcessing();
+        axios
+          .delete(`${TERMINATE_ENDPOINT}/${item.video_id}`, { withCredentials: true })
+          .catch((error) => {
+            toast({
+              title: error.response.data,
+              status: "error",
+              position: "top",
+              duration: null,
+              isClosable: true,
+            });
+          });
+      },
+      onCancel: () => {
+        setTargetConfirmation(null);
+      },
+    });
   };
 
-  const retry = (item: Item, done: () => void) => {
+  const onRetry = (item: Item, done: () => void) => {
     axios
       .post(`${RETRY_ENDPOINT}/${item.video_id}`, {}, { withCredentials: true })
-      .finally(() => done());
-  };
-
-  const download = (item: Item) => {
-    router.push(`${DOWNLOAD_ENDPOINT}/${item.video_id}`);
+      .catch((error) => {
+        toast({
+          title: error.response.data,
+          status: "error",
+          position: "top",
+          duration: null,
+          isClosable: true,
+        });
+      })
+      .finally(() => {
+        done();
+      });
   };
 
   return (
     <Flex p={10} alignItems="center" direction="column">
-      <Text fontSize="4xl" mb={4}>Audio Downloader from YouTube</Text>
+      <Text fontSize="4xl" mb={4}>
+        Audio Downloader from YouTube
+      </Text>
       <Flex
         boxShadow="lg"
         borderRadius="xl"
@@ -344,13 +366,7 @@ export default function Page() {
             </Flex>
           ) : items.length != 0 ? (
             items.map((it) => (
-              <Item
-                key={it.video_id}
-                item={it}
-                onTerminate={cancelItem}
-                onRetry={retry}
-                onDownload={download}
-              />
+              <Item key={it.video_id} item={it} onTerminate={terminateItem} onRetry={onRetry} />
             ))
           ) : (
             <Flex justifyContent="center" p={5}>
@@ -359,12 +375,7 @@ export default function Page() {
           )}
         </Flex>
       </Flex>
-      <ConfirmationDialog
-        ref={dialogRef}
-        dialog={dialog}
-        title="Cancel confirmation"
-        description="Are you sure to cancel the item?"
-      />
+      <ConfirmationDialog target={targetConfirmation} />
     </Flex>
   );
 }
