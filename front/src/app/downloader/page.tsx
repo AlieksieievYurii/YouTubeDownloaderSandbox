@@ -6,15 +6,30 @@ import {
   Flex,
   IconButton,
   Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
   Progress,
   Spinner,
   Text,
+  useDisclosure,
   useToast,
 } from "@chakra-ui/react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-import { ITEMS_ENDPOINT, QUEUE_ENDPOINT } from "@/config";
+import {
+  DOWNLOAD_ENDPOINT,
+  ITEMS_ENDPOINT,
+  QUEUE_ENDPOINT,
+  RETRY_ENDPOINT,
+  TERMINATE_ENDPOINT,
+} from "@/config";
 
 interface Item {
   url: string;
@@ -33,7 +48,45 @@ enum State {
   FAILED = "FAILED",
 }
 
-const Item = ({ item }: { item: Item }) => {
+const ConfirmationDialog = ({ dialog, title, description, onConfirm }: any) => {
+  return (
+    <>
+      <Modal isOpen={dialog.isOpen} onClose={dialog.onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>{title}</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text>{description}</Text>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={dialog.onClose}>
+              Cancel
+            </Button>
+            <Button variant="ghost" colorScheme="red" onClick={onConfirm}>
+              OK
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
+  );
+};
+
+const Item = ({
+  item,
+  onTerminate,
+  onRetry,
+  onDownload,
+}: {
+  item: Item;
+  onTerminate: (item: Item) => void;
+  onRetry: (item: Item, done: () => void) => void;
+  onDownload: (item: Item) => void;
+}) => {
+  const [loading, setLoading] = useState(false);
+
   let progress_bar = null;
   if (item.state === State.QUEUED || item.state === State.DOWNLOADING) {
     progress_bar = <Progress width="100%" size="xs" isIndeterminate mt={2} />;
@@ -43,53 +96,63 @@ const Item = ({ item }: { item: Item }) => {
   if (item.state === State.DOWNLOADING) {
     hint = `${item.progress} % (${item.downloaded_size / 1000000} / ${item.total_size / 1000000} MB)`;
   } else if (item.state === State.DOWNLOADED) {
-    hint = "34.4 MB";
+    hint = `${item.total_size / 1000000} MB`;
   } else if (item.state === State.FAILED) {
     hint = item.error_message || "No error message";
   }
 
-  const onCancel = () => {
-    console.log("Cancel");
-  };
-
-  const onDelete = () => {
-    console.log("Delete");
-  };
-
-  const onRetry = () => {
-    console.log("Retry");
-  };
-
-  const onDownload = () => {};
-
   let action = (
-    <IconButton aria-label="Cancel" icon={<CloseIcon />} colorScheme="blue" onClick={onCancel} />
+    <IconButton
+      aria-label="Cancel"
+      icon={<CloseIcon />}
+      colorScheme="blue"
+      isLoading={loading}
+      onClick={() => {
+        setLoading(true);
+        onTerminate(item);
+      }}
+    />
   );
   if (item.state === State.DOWNLOADED)
     action = (
       <Flex gap={1}>
         <IconButton
           aria-label="Delete"
+          isLoading={loading}
           icon={<DeleteIcon />}
           colorScheme="red"
-          onClick={onDelete}
+          onClick={() => {
+            setLoading(true);
+            onTerminate(item);
+          }}
         />
         <IconButton
           aria-label="Download"
           icon={<DownloadIcon />}
           colorScheme="blue"
-          onClick={onDownload}
+          onClick={() => onDownload(item)}
         />
       </Flex>
     );
   else if (item.state === State.FAILED)
     action = (
-      <IconButton
-        aria-label="Cancel"
-        icon={<RepeatIcon />}
-        colorScheme="orange"
-        onClick={onRetry}
-      />
+      <Flex gap={1}>
+        <IconButton
+          aria-label="Delete"
+          icon={<DeleteIcon />}
+          colorScheme="red"
+          onClick={() => onTerminate(item)}
+        />
+        <IconButton
+          aria-label="Retry"
+          icon={<RepeatIcon />}
+          colorScheme="orange"
+          onClick={() => {
+            setLoading(true);
+            onRetry(item, () => setLoading(false));
+          }}
+        />
+      </Flex>
     );
 
   return (
@@ -106,52 +169,6 @@ const Item = ({ item }: { item: Item }) => {
   );
 };
 
-const data = [
-  { video_id: "0", url: "http://0", state: "FAILED", error_message: "No space" },
-  {
-    video_id: "1",
-    url: "http://1",
-    state: "DOWNLOADING",
-    progress: 50,
-    downloaded_size: 1000000,
-    total_size: 2000000,
-  },
-  { video_id: "2", url: "http://2", state: "DOWNLOADED" },
-  { video_id: "3", url: "http://3", state: "QUEUED" },
-  {
-    video_id: "4",
-    url: "http://4",
-    state: "DOWNLOADING",
-    progress: 34,
-    total_size: 2000000,
-    downloaded_size: 1000000,
-  },
-  { video_id: "5", url: "http://5", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-  { video_id: "6", url: "http://6", state: "DOWNLOADING" },
-];
-
 export default function Page() {
   const [isPosting, setIsPosting] = useState(false);
   const [isLoadingItems, setIsLoadingItems] = useState(true);
@@ -159,6 +176,9 @@ export default function Page() {
   const [items, setItems] = useState<Item[]>([]);
   const nameInput = useRef<HTMLInputElement>(null);
   const toast = useToast();
+  const dialog = useDisclosure();
+  const dialogRef = useRef(null);
+  const router = useRouter();
 
   const youTubeUrlRegex = /https:\/\/www\.youtube\.com\/watch\?v=(\S+)/;
 
@@ -183,6 +203,15 @@ export default function Page() {
       .then((response) => {
         console.log(response);
         setIsPosting(false);
+        nameInput.current!!.value = "";
+        toast({
+          title: "Item has been queued",
+          description: "Audio file will be downloaded soon",
+          status: "success",
+          position: "top",
+          duration: 3000,
+          isClosable: true,
+        });
       })
       .catch((error) => {
         setIsPosting(false);
@@ -246,9 +275,23 @@ export default function Page() {
     return () => clearInterval(id);
   }, []);
 
+  const cancelItem = (item: Item) => {
+    axios.delete(`${TERMINATE_ENDPOINT}/${item.video_id}`, { withCredentials: true });
+  };
+
+  const retry = (item: Item, done: () => void) => {
+    axios
+      .post(`${RETRY_ENDPOINT}/${item.video_id}`, {}, { withCredentials: true })
+      .finally(() => done());
+  };
+
+  const download = (item: Item) => {
+    router.push(`${DOWNLOAD_ENDPOINT}/${item.video_id}`);
+  };
+
   return (
     <Flex p={10} alignItems="center" direction="column">
-      <Text fontSize="4xl">Audio Downloader from YouTube</Text>
+      <Text fontSize="4xl" mb={4}>Audio Downloader from YouTube</Text>
       <Flex
         boxShadow="lg"
         borderRadius="xl"
@@ -296,7 +339,15 @@ export default function Page() {
               />
             </Flex>
           ) : items.length != 0 ? (
-            items.map((it) => <Item key={it.video_id} item={it} />)
+            items.map((it) => (
+              <Item
+                key={it.video_id}
+                item={it}
+                onTerminate={cancelItem}
+                onRetry={retry}
+                onDownload={download}
+              />
+            ))
           ) : (
             <Flex justifyContent="center" p={5}>
               <Text>No downloaded audios yet!</Text>
@@ -304,6 +355,12 @@ export default function Page() {
           )}
         </Flex>
       </Flex>
+      <ConfirmationDialog
+        ref={dialogRef}
+        dialog={dialog}
+        title="Cancel confirmation"
+        description="Are you sure to cancel the item?"
+      />
     </Flex>
   );
 }
