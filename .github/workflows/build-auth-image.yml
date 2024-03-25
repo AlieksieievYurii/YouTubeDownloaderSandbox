@@ -8,7 +8,7 @@ on:
       - 'back/auth/**'
 
 jobs:
-  build:
+  BuildDockerImage:
     runs-on: ubuntu-latest
 
     steps:
