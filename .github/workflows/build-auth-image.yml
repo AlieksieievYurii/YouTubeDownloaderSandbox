@@ -1,16 +1,21 @@
 name: Docker Image CI
 
-on: push
+on: workflow_dispatch
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - run: echo $SUPER_SECRET
-      env:
-        SUPER_SECRET: ${{ secrets.EXP }}
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-      working-directory: ./back/auth
+      - name: Login into Dockerhub
+        run: echo $DOCKERHUB_TOKEN | docker login --username $DOCKERHUB_USERNAME --password-stdin
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+    # - uses: actions/checkout@v3
+    # - run: echo $SUPER_SECRET
+    #   env:
+    #     SUPER_SECRET: ${{ secrets.EXP }}
+    # - name: Build the Docker image
+    #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    #   working-directory: ./back/auth
