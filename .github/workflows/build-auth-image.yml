@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Build & Publish Auth image
 
 on: workflow_dispatch
 
@@ -7,15 +7,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Login into Dockerhub
-        run: echo $DOCKERHUB_TOKEN | docker login --username $DOCKERHUB_USERNAME --password-stdin
-        env:
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-    # - uses: actions/checkout@v3
-    # - run: echo $SUPER_SECRET
-    #   env:
-    #     SUPER_SECRET: ${{ secrets.EXP }}
-    # - name: Build the Docker image
-    #   run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
-    #   working-directory: ./back/auth
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v3.1.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v3.1.0
+        with:
+          images: alieksieiev/yt-downloader-auth
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3.1.0
+        with:
+          context: ./back/auth
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
