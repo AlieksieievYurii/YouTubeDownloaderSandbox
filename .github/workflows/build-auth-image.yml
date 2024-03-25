@@ -5,7 +5,7 @@ on:
     branches:
       - 'main'
     paths:
-      - './back/auth/'
+      - 'back/auth/**'
 
 jobs:
   build:
