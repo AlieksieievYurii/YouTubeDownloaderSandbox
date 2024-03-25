@@ -8,9 +8,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - run: ls
-    - run: ls
-      working-directory: ./back/auth
+    - run: echo $SUPER_SECRET
+      env:
+        SUPER_SECRET: ${{ secrets.EXP }}
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
       working-directory: ./back/auth
