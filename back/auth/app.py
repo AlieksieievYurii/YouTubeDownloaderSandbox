@@ -4,6 +4,7 @@ This is authentication service
 
 import os
 import datetime
+import sys
 
 from flask import Flask, request
 from flask_mysqldb import MySQL
@@ -12,13 +13,23 @@ import jwt
 server = Flask(__name__)
 mysql = MySQL(server)
 
-server.config["JWT_SECRET"] = os.environ.get("JWT_SECRET")
 
-server.config["MYSQL_HOST"] = os.environ.get("MYSQL_HOST")
-server.config["MYSQL_USER"] = os.environ.get("MYSQL_USER")
-server.config["MYSQL_PASSWORD"] = os.environ.get("MYSQL_PASSWORD")
-server.config["MYSQL_DB"] = os.environ.get("MYSQL_DB")
-server.config["MYSQL_PORT"] = int(os.environ.get("MYSQL_PORT"))
+def require_env(key: str) -> str:
+    """Ensures that given env variable exists"""
+    value = os.environ.get(key)
+    if not value:
+        print(f"Env var '{key}' must be defined!")
+        sys.exit(1)
+    return value
+
+
+server.config["JWT_SECRET"] = require_env("JWT_SECRET")
+
+server.config["MYSQL_HOST"] = require_env("MYSQL_HOST")
+server.config["MYSQL_USER"] = require_env("MYSQL_USER")
+server.config["MYSQL_PASSWORD"] = require_env("MYSQL_PASSWORD")
+server.config["MYSQL_DB"] = require_env("MYSQL_DB")
+server.config["MYSQL_PORT"] = int(require_env("MYSQL_PORT"))
 
 
 @server.route("/login", methods=["POST"])
