@@ -1,6 +1,11 @@
 name: Build & Publish Auth image
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - './back/auth/'
 
 jobs:
   build:
