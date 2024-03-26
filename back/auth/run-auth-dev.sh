@@ -7,3 +7,4 @@ export MYSQL_DB=auth
 export MYSQL_PORT=3306
 
 py app.py
+

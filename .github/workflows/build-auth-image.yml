@@ -1,0 +1,34 @@
+name: Build & Publish Auth image
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'back/auth/**'
+
+jobs:
+  BuildDockerImage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/login-action@v3.1.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v3.1.0
+        with:
+          images: alieksieiev/yt-downloader-auth
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3.1.0
+        with:
+          context: ./back/auth
+          file: ./back/auth/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
