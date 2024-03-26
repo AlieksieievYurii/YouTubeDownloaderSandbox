@@ -1,6 +1,7 @@
 """Utils file"""
 
 import datetime
+from typing import Dict, Optional
 import jwt
 
 
@@ -19,3 +20,11 @@ def create_jwt(email: str, secret: str) -> str:
         secret,
         algorithm="HS256",
     )
+
+
+def decode_jwt(encoded_jwt: str, secret: str) -> Optional[Dict]:
+    """Decodes given JWT"""
+    try:
+        return jwt.decode(encoded_jwt, secret, algorithms=["HS256"])
+    except jwt.InvalidTokenError:
+        return None

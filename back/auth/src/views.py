@@ -53,11 +53,8 @@ def validate():
 
     encoded_jwt = encoded_jwt.split()[1]
 
-    try:
-        decoded = jwt.decode(
-            encoded_jwt, current_app.config["JWT_SECRET"], algorithms=["HS256"]
-        )
-    except jwt.InvalidTokenError:
+    decoded = utils.decode_jwt(encoded_jwt, current_app.config["JWT_SECRET"])
+    if not decoded:
         return "not athorized", 401
 
     return decoded, 200
