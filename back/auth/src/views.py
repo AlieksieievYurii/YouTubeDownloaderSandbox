@@ -1,7 +1,5 @@
 """Contains different endpoint(views)"""
 
-import jwt
-
 from flask import Blueprint, current_app, request
 
 from . import utils
@@ -18,29 +16,17 @@ def login():
     if not request.authorization:
         return "missing credentials", 401
 
-    cur = current_app.auth_db.connection.cursor()
+    res = current_app.auth_db.get_user(request.authorization.username)
 
-    res = cur.execute(
-        "SELECT email, password FROM user WHERE email=%s",
-        (request.authorization.username,),
+    if not res or (
+        request.authorization.username != res[0]
+        or request.authorization.password != res[1]
+    ):
+        return "invalid creadentials", 401
+
+    return utils.create_jwt(
+        request.authorization.username, current_app.config["JWT_SECRET"]
     )
-
-    if res > 0:
-        user_row = cur.fetchone()
-        email = user_row[0]
-        password = user_row[1]
-
-        if (
-            request.authorization.username != email
-            or request.authorization.password != password
-        ):
-            return "invalid creadentials", 401
-
-        return utils.create_jwt(
-            request.authorization.username, current_app.config["JWT_SECRET"]
-        )
-
-    return "invalid credentials", 401
 
 
 @auth_blueprint.route("/validate", methods=["POST"])

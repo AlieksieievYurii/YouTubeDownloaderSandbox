@@ -6,6 +6,8 @@ import os
 import sys
 from flask import Flask
 from flask_mysqldb import MySQL
+
+from .db import AuthDB
 from . import views
 
 
@@ -23,6 +25,7 @@ def create_app(test_config=None) -> Flask:
     app = Flask(__name__)
 
     if test_config:
+        app.auth_db = test_config.pop("AUTH_DB")
         app.config.from_mapping(test_config)
     else:
         app.config["JWT_SECRET"] = require_env("JWT_SECRET")
@@ -32,7 +35,7 @@ def create_app(test_config=None) -> Flask:
         app.config["MYSQL_DB"] = require_env("MYSQL_DB")
         app.config["MYSQL_PORT"] = int(require_env("MYSQL_PORT"))
 
-    app.auth_db = MySQL(app)
+        app.auth_db = AuthDB(app)
 
     app.register_blueprint(views.auth_blueprint)
 
