@@ -9,7 +9,36 @@ on:
   workflow_dispatch:
 
 jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r back/auth/requirements.txt
+          
+      - name: Test with pytest
+        run: |
+          pip install pytest coverage
+          coverage run -m pytest back/auth/tests
+          coverage report
+          coverage html
+      - name: Publish Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: htmlcov/index.html
+          
   BuildDockerImage:
+    needs: [Test]
+    if: false
     runs-on: ubuntu-latest
 
     steps:
