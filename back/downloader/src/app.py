@@ -5,11 +5,13 @@ an item in the database.
 """
 
 import json
-from pathlib import Path
-import tempfile
-from gridfs import GridFS
 import pika
+import tempfile
+
+from pathlib import Path
+from gridfs import GridFS
 from pymongo import MongoClient
+
 import youtube_downloader
 import variables
 
