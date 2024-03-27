@@ -13,22 +13,37 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: docker/login-action@v3.1.0
+      - name: Set up Python
+      - uses: actions/setup-python@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v3.1.0
-        with:
-          images: alieksieiev/yt-downloader-auth
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r back/auth/requirements.txt
+      - name: Test with pytest
+        run: |
+          pip install pytest coverage
+          coverage run -m pytest back/auth/tests
+          coverage report
+          coverage html
           
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v3.1.0
-        with:
-          context: ./back/auth
-          file: ./back/auth/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      # - uses: docker/login-action@v3.1.0
+      #   with:
+      #     username: ${{ secrets.DOCKERHUB_USERNAME }}
+      #     password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # - name: Extract metadata
+      #   id: meta
+      #   uses: docker/metadata-action@v3.1.0
+      #   with:
+      #     images: alieksieiev/yt-downloader-auth
+          
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v3.1.0
+      #   with:
+      #     context: ./back/auth
+      #     file: ./back/auth/Dockerfile
+      #     push: true
+      #     tags: ${{ steps.meta.outputs.tags }}
+      #     labels: ${{ steps.meta.outputs.labels }}
