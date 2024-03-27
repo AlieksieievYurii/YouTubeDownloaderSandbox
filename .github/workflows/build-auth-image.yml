@@ -6,6 +6,7 @@ on:
       - 'main'
     paths:
       - 'back/auth/**'
+  workflow_dispatch:
 
 jobs:
   BuildDockerImage:
