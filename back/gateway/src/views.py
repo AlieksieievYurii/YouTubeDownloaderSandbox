@@ -33,7 +33,11 @@ def login():
         return response
     if resp.status_code == 401:
         return "Invalid credentials", 401
-    return f"Internal service failed: <{resp.status_code}> {resp.text}"
+
+    return (
+        f"Internal service failed: <{resp.status_code}> {resp.text}",
+        HTTPStatus.INTERNAL_SERVER_ERROR,
+    )
 
 
 @gateway.route("/validate-token", methods=["GET"])
