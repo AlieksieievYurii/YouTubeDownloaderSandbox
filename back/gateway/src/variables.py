@@ -16,7 +16,7 @@ def _load_env_variable(name: str, default: Optional[str] = None) -> str:
 
 
 AUTH_SERVICE_HOST = _load_env_variable("AUTH_SERVICE_HOST", "localhost")
-AUTH_SERVICE_PORT = _load_env_variable("AUTH_SERVICE_HOST", "5000")
+AUTH_SERVICE_PORT = _load_env_variable("AUTH_SERVICE_PORT", "5000")
 AUTH_SERVICE_URL = f"http://{AUTH_SERVICE_HOST}:{AUTH_SERVICE_PORT}"
 AUTH_SERVICE_LOGIN = f"{AUTH_SERVICE_URL}/login"
 AUTH_SERVICE_VALIDATE = f"{AUTH_SERVICE_URL}/validate"
