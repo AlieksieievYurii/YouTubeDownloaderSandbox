@@ -1,4 +1,4 @@
-name: Release Auth Image
+name: Release Gateway Image
 
 on:
   push:
