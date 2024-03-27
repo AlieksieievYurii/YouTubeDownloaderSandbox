@@ -1,4 +1,4 @@
-name: Build & Publish Auth image
+name: Release Auth Image
 
 on:
   push:
