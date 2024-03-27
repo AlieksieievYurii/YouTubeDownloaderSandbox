@@ -27,7 +27,7 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest coverage
-          coverage run --omit="*/test*" -m pytest back/auth/tests
+          coverage run --omit="*/tests*" -m pytest back/auth/tests
           coverage report
           coverage html 
   
