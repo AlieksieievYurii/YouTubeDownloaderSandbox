@@ -1,0 +1,65 @@
+name: Release Gateway Image
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - 'back/gateway/**'
+  workflow_dispatch:
+
+jobs:
+  Test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r back/gateway/requirements.txt
+          
+      - name: Test with pytest
+        run: |
+          pip install pytest coverage
+          coverage run --omit="*/tests*" -m pytest back/gateway/tests
+          coverage report
+          coverage html 
+  
+      - name: Publish Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: htmlcov/index.html
+          
+  BuildDockerImage:
+    needs: [Test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+          
+      - uses: docker/login-action@v3.1.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v3.1.0
+        with:
+          images: alieksieiev/yt-downloader-gateway
+          
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3.1.0
+        with:
+          context: ./back/gateway
+          file: ./back/gateway/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
