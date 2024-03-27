@@ -1,12 +1,12 @@
 """Provides stuff for handling authentication"""
 
+import requests
 import functools
 from http import HTTPStatus
 from typing import Tuple
-import requests
-import variables
-
 from flask import request
+
+from . import variables
 
 
 def validate_jwt(jwt: str) -> Tuple[bool, str]:
