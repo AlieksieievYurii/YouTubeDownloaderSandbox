@@ -41,6 +41,13 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: yurii
       RABBITMQ_DEFAULT_PASS: yurii
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 1m30s
+      timeout: 60s
+      retries: 3
+      start_period: 40s
+      start_interval: 5s
 
   auth:
     image: alieksieiev/yt-downloader-auth:main
@@ -62,9 +69,12 @@ services:
     image: alieksieiev/yt-downloader-gateway:main
     restart: always
     depends_on:
-      - mongo
-      - rabbitmq
-      - auth
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+      auth:
+        condition: service_started
     ports:
       - 8080:8080
     environment:
@@ -76,6 +86,24 @@ services:
       MONGODB_USERNAME: yurii
       MONGODB_PASSWORD: yurii
 
-      RABBITMQ_HOST: rabbitmq
+      RABBITQM_HOST: rabbit
       RABBITMQ_SVC_USER: yurii
       RABBITMQ_SVC_PASSWORD: yurii
+
+  downloader:
+    image: alieksieiev/yt-downloader:main
+    restart: always
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongo:
+        condition: service_started
+    environment:
+      RABBITQM_HOST: rabbit
+      RABBITMQ_SVC_USER: yurii
+      RABBITMQ_SVC_PASSWORD: yurii
+
+      MONGODB_HOST: mongo
+      MONGODB_PORT: 27017
+      MONGODB_USERNAME: yurii
+      MONGODB_PASSWORD: yurii
