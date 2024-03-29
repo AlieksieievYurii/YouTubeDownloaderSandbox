@@ -1,8 +1,7 @@
 import requests
 
 from http import HTTPStatus
-from flask import Blueprint, current_app, request
-from flask import request, make_response, send_file
+from flask import Blueprint, current_app, request, make_response, send_file
 
 from . import utils
 from . import variables

@@ -31,6 +31,6 @@ MONGODB = (
     + f"@{MONGODB_HOST}:{MONGODB_PORT}"
 )
 
-RABBITMQ_HOST = _load_env_variable("RABBITQM_HOST", "localhost")
+RABBITMQ_HOST = _load_env_variable("RABBITMQ_HOST", "localhost")
 RABBITMQ_SVC_USER = _load_env_variable("RABBITMQ_SVC_USER", "yurii")
 RABBITMQ_SVC_PASSWORD = _load_env_variable("RABBITMQ_SVC_PASSWORD", "yurii")

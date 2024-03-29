@@ -86,7 +86,7 @@ services:
       MONGODB_USERNAME: yurii
       MONGODB_PASSWORD: yurii
 
-      RABBITQM_HOST: rabbit
+      RABBITMQ_HOST: rabbit
       RABBITMQ_SVC_USER: yurii
       RABBITMQ_SVC_PASSWORD: yurii
 
@@ -99,7 +99,7 @@ services:
       mongo:
         condition: service_started
     environment:
-      RABBITQM_HOST: rabbit
+      RABBITMQ_HOST: rabbit
       RABBITMQ_SVC_USER: yurii
       RABBITMQ_SVC_PASSWORD: yurii
 
