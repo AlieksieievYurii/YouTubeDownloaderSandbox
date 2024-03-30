@@ -1,6 +1,5 @@
 "use client";
 
-import { LOGIN_ENDPOINT } from "@/config";
 import {
   Avatar,
   Box,
@@ -21,6 +20,8 @@ import axios from "axios";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { FaLock, FaUserAlt } from "react-icons/fa";
+
+import { LOGIN_ENDPOINT } from "@/config";
 
 const CFaUserAlt = chakra(FaUserAlt);
 const CFaLock = chakra(FaLock);
