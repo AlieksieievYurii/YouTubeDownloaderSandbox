@@ -29,7 +29,7 @@ The frontend is built using NextJS 14.
 
 ### How to run
 
-1. First of all, create .env.local containing the following:
+1. First of all, create .env.local, in _front_ folder, containing the following:
     ```
     NEXT_PUBLIC_GATEWAY_URL=<URL path to gateway>
     NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=<This is optional. Using this variable you can override URL for accessing gateway from fronted's server>
