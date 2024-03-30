@@ -22,3 +22,20 @@ Each service has its own pipeline that tests, builds the image, and then publish
 [![Release Gateway Image](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-gateway-image.yml/badge.svg?branch=main)](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-gateway-image.yml)
 
 [![Release YT Downloader Image](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-downloader-image.yml/badge.svg?branch=main)](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-downloader-image.yml)
+
+## Frontend
+
+The frontend is built using NextJS 14. 
+
+### How to run
+
+1. First of all, create .env.local containing the following:
+    ```
+    NEXT_PUBLIC_GATEWAY_URL=<URL path to gateway>
+    NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=<This is optional. Using this variable you can override URL for accessing gateway from fronted's server>
+    ```
+
+2. Run `npm install` to install dependencies.
+3. Run `npm run dev` to start the development instance.
+4. Run `npm run build` to build the sources for production
+   
