@@ -107,3 +107,11 @@ services:
       MONGODB_PORT: 27017
       MONGODB_USERNAME: yurii
       MONGODB_PASSWORD: yurii
+  
+  front:
+    image: alieksieiev/yt-downloader-frontend:main
+    restart: always
+    ports:
+      - 3000:3000
+    depends_on:
+      - gateway
