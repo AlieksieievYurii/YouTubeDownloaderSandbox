@@ -1,5 +1,4 @@
 name: Release Frontend Image
-
 on:
   push:
     branches:
@@ -7,6 +6,16 @@ on:
     paths:
       - 'front/**'
   workflow_dispatch:
+    inputs:
+      gateway_url:
+        description: "URL of the gateway that must be used in the Docker image"
+        required: true
+        default: "http://localhost:8080"
+
+      server_side_gateway_url:
+        description: "URL of the gateway (which will be accessed from server side) that must be used in the Docker image"
+        required: true
+        default: "http://gateway:8080"
 
 jobs:
   BuildDockerImage:
@@ -20,22 +29,23 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v3.1.0
-        with:
-          images: alieksieiev/yt-downloader-frontend
+      # - name: Extract metadata
+      #   id: meta
+      #   uses: docker/metadata-action@v3.1.0
+      #   with:
+      #     images: alieksieiev/yt-downloader-frontend
           
       - name: Create .env.local
         run: |
-          echo NEXT_PUBLIC_GATEWAY_URL=http://localhost:8080 >> .env.local
+          echo "${{ github.event.inputs.gateway_url }}"
+          echo NEXT_PUBLIC_GATEWAY_URL=${{ github.event.inputs.gateway_url }} >> .env.local
           echo NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=http://gateway:8080 >> .env.local
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v3.1.0
-        with:
-          context: ./front
-          file: ./front/Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v3.1.0
+      #   with:
+      #     context: ./front
+      #     file: ./front/Dockerfile
+      #     push: true
+      #     tags: ${{ steps.meta.outputs.tags }}
+      #     labels: ${{ steps.meta.outputs.labels }}
