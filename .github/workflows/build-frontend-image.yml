@@ -14,7 +14,7 @@ on:
 
       server_side_gateway_url:
         description: "URL of the gateway (which will be accessed from server side) that must be used in the Docker image"
-        required: true
+        required: false
         default: "http://gateway:8080"
 
 jobs:
@@ -37,10 +37,15 @@ jobs:
           
       - name: Create .env.local
         run: |
-          echo "${{ github.event.inputs.gateway_url }}"
+          ss_gateway_url="${{ github.event.inputs.server_side_gateway_url }}"
+          
+          if [ "$ss_gateway_url" != "" ]; then
+            echo NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=$ss_gateway_url >> .env.local
+            
           echo NEXT_PUBLIC_GATEWAY_URL=${{ github.event.inputs.gateway_url }} >> .env.local
-          echo NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=http://gateway:8080 >> .env.local
 
+          cat .env.local
+          
       # - name: Build and push Docker image
       #   uses: docker/build-push-action@v3.1.0
       #   with:
