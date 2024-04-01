@@ -25,6 +25,8 @@ Each service has its own pipeline that tests, builds the image, and then publish
 
 [![Release YT Downloader Image](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-downloader-image.yml/badge.svg?branch=main)](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-downloader-image.yml)
 
+[![Release Frontend Image](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-frontend-image.yml/badge.svg?branch=main)](https://github.com/AlieksieievYurii/YouTubeDownloaderSandbox/actions/workflows/build-frontend-image.yml)
+
 ## Frontend
 
 The frontend is built using NextJS 14. 
