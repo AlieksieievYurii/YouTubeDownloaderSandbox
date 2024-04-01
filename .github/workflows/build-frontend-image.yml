@@ -40,10 +40,10 @@ jobs:
           ss_gateway_url="${{ github.event.inputs.server_side_gateway_url }}"
           
           if [ "$ss_gateway_url" != "" ]; then
-            echo NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=$ss_gateway_url >> .env.local
+            echo NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=$ss_gateway_url >> front/.env.local
           fi
             
-          echo NEXT_PUBLIC_GATEWAY_URL=${{ github.event.inputs.gateway_url }} >> .env.local
+          echo NEXT_PUBLIC_GATEWAY_URL=${{ github.event.inputs.gateway_url }} >> front/.env.local
           
       - name: Build and push Docker image
         uses: docker/build-push-action@v3.1.0
