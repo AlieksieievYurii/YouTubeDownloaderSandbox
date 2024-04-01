@@ -29,11 +29,11 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # - name: Extract metadata
-      #   id: meta
-      #   uses: docker/metadata-action@v3.1.0
-      #   with:
-      #     images: alieksieiev/yt-downloader-frontend
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v3.1.0
+        with:
+          images: alieksieiev/yt-downloader-frontend
           
       - name: Create .env.local
         run: |
@@ -44,14 +44,12 @@ jobs:
           fi
             
           echo NEXT_PUBLIC_GATEWAY_URL=${{ github.event.inputs.gateway_url }} >> .env.local
-
-          cat .env.local
           
-      # - name: Build and push Docker image
-      #   uses: docker/build-push-action@v3.1.0
-      #   with:
-      #     context: ./front
-      #     file: ./front/Dockerfile
-      #     push: true
-      #     tags: ${{ steps.meta.outputs.tags }}
-      #     labels: ${{ steps.meta.outputs.labels }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3.1.0
+        with:
+          context: ./front
+          file: ./front/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
