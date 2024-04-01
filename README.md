@@ -13,6 +13,8 @@ The service consists of the following components:
 - Auth (Python, Flask) - an authorization microservice.
 - Downloader (Python) - a service responsible for downloading audio files from YouTube.
 
+The first simple deployment is done using Docker Compose.
+
 ## CI
 
 Each service has its own pipeline that tests, builds the image, and then publishes it to Dockerhub.
