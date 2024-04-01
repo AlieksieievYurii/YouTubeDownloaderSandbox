@@ -41,6 +41,7 @@ jobs:
           
           if [ "$ss_gateway_url" != "" ]; then
             echo NEXT_PUBLIC_SERVER_SIDE_GATEWAY_URL=$ss_gateway_url >> .env.local
+          fi
             
           echo NEXT_PUBLIC_GATEWAY_URL=${{ github.event.inputs.gateway_url }} >> .env.local
 
